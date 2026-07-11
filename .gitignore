@@ -1,0 +1,3 @@
+# build artifacts produced by `make`
+/example-licensed.zip
+/example-licensed_sealed.zip

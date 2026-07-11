@@ -1,0 +1,35 @@
+name: release
+
+# On a version tag, build the plugin, seal it with fylr-encrypt-plugin (public
+# key only — no secrets), and attach the sealed plugin to the GitHub release.
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version: stable
+
+      - name: Build plugin zip
+        run: zip -r example-licensed.zip example-licensed
+
+      - name: Seal for the fylr Plugin Shop
+        run: >
+          go run github.com/programmfabrik/fylr-encrypt-plugin@latest
+          -in example-licensed.zip
+          -out example-licensed_sealed.zip
+
+      - name: Attach sealed plugin to the release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: example-licensed_sealed.zip
