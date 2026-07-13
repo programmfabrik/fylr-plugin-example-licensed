@@ -1,5 +1,6 @@
 plugin:
   name: example-licensed
+  url: https://github.com/programmfabrik/fylr-plugin-example-licensed
   version: "1.0"
   displayname:
     en-US: Example licensed plugin
