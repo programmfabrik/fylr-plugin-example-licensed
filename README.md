@@ -31,27 +31,42 @@ public key (or a shop source's own key) — still no secret in the repo.
 ## Build locally
 
 ```sh
-make            # -> example-licensed_sealed.zip (a valid zip)
+make            # -> build/example-licensed_sealed.zip (a valid zip)
 ```
 
-`example-licensed_sealed.zip` is an ordinary zip whose single entry is the sealed
-plugin:
+The sealed plugin is an ordinary zip whose single entry is the encrypted plugin:
 
 ```
-example-licensed_sealed.zip
+build/example-licensed_sealed.zip
 └── fylr-sealed-plugin.enc
 ```
 
-## Install in fylr
+## Publish to GitHub Pages
 
-A fylr administrator installs it through the Plugin Shop from a source that offers
-this plugin's sealed release URL (in `fylr.yml`, `plugin.shop.sources`). fylr
-fetches the zip, decrypts the sealed entry with its key, and installs the plugin.
-On a `-tags licensetest` fylr the default-sealed release installs and runs; on a
-normal build it is rejected — the licensed-delivery guarantee in miniature.
+Publishing a GitHub **release** runs the [workflow](.github/workflows/release.yml):
+it builds the plugin, seals it, attaches the sealed zip to the release, and
+publishes it to **GitHub Pages** under an unguessable filename — the same delivery
+mechanism the other fylr plugins use (e.g. `fylr-plugin-ai-metadata`):
 
-## Release
+```
+https://programmfabrik.github.io/fylr-plugin-example-licensed/fylr-plugin-example-licensed-a5c6d4ba-9284-4b36-acf2-42ddbfa31edf-latest.zip
+```
 
-Push a `vX.Y.Z` tag; the workflow builds, seals, and attaches
-`example-licensed_sealed.zip` to the GitHub release. (Requires
-`fylr-encrypt-plugin` to be published.)
+The UUID in the filename (`ZIP_HASH` in the workflow) is the "hash": for a
+*private* licensed-plugin repo, that Pages URL is the only handle to the artifact.
+Sealing adds a second layer — a leaked URL still yields nothing without fylr's key.
+
+One-time setup: in the repo **Settings → Pages**, set the source to **GitHub
+Actions**.
+
+## Install and test in fylr
+
+An administrator installs the plugin from that Pages URL — either directly
+(`PUT /plugin/manage` with `type: url`) or by offering it from a
+`plugin.shop.sources` entry in `fylr.yml`. fylr fetches the zip, decrypts the
+sealed entry with its key, and installs the plugin.
+
+Because this repo seals to the **dev/CI** key, the published plugin installs and
+runs only on a fylr built with `-tags licensetest`; a normal release build rejects
+it — the licensed-delivery guarantee in miniature. A real paid plugin seals to the
+production key and installs on the customers whose license carries it.

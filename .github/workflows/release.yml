@@ -1,35 +1,65 @@
-name: release
+name: Release
 
-# On a version tag, build the plugin, seal it with fylr-encrypt-plugin (public
-# key only — no secrets), and attach the sealed plugin to the GitHub release.
+# On a published release: build the plugin, seal it with fylr-encrypt-plugin
+# (public key only — no secrets), attach the sealed plugin to the release, and
+# publish it to GitHub Pages at an unguessable URL (a per-repo UUID in the
+# filename) — the same delivery mechanism the other fylr plugins use. A licensed
+# plugin repo is normally private, so that Pages URL is the only handle to the
+# artifact; sealing means a leaked URL still yields nothing without fylr's key.
 on:
-  push:
-    tags:
-      - "v*"
+  release:
+    types:
+      - published
+      - edited
 
-permissions:
-  contents: write
+env:
+  # Unguessable, stable per repo — the "hash" in the Pages filename. Generate a
+  # fresh one (uuidgen) for a real plugin so its URL cannot be derived from this
+  # template.
+  ZIP_HASH: a5c6d4ba-9284-4b36-acf2-42ddbfa31edf
+  SEALED: example-licensed_sealed.zip
 
 jobs:
-  release:
+  build:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
-      - uses: actions/setup-go@v5
+      - uses: actions/setup-go@v6
         with:
-          go-version: stable
+          go-version: "1.26"
 
-      - name: Build plugin zip
-        run: zip -r example-licensed.zip example-licensed
-
-      - name: Seal for the fylr Plugin Shop
-        run: >
-          go run github.com/programmfabrik/fylr-encrypt-plugin@latest
-          -in example-licensed.zip
-          -out example-licensed_sealed.zip
+      - name: Build and seal the plugin
+        run: make sealed        # -> build/example-licensed_sealed.zip
 
       - name: Attach sealed plugin to the release
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@v3
         with:
-          files: example-licensed_sealed.zip
+          files: build/${{ env.SEALED }}
+
+      - name: Prepare GitHub Pages upload (unguessable filename)
+        run: |
+          mkdir -p public
+          cp build/${{ env.SEALED }} \
+             public/${{ github.event.repository.name }}-${{ env.ZIP_HASH }}-latest.zip
+
+      - name: Upload GitHub Pages artifact
+        uses: actions/upload-pages-artifact@v5
+        with:
+          path: ./public
+
+  deploy:
+    if: "!github.event.release.prerelease"
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v5
