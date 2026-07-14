@@ -12,10 +12,10 @@ served web file). The interesting part is the release pipeline.
 ## How it's sealed
 
 The [release workflow](.github/workflows/release.yml) builds `example-licensed.zip`
-and seals it with [`fylr-encrypt-plugin`](https://github.com/programmfabrik/fylr-encrypt-plugin):
+and seals it with [`fylr-seal-plugin`](https://github.com/programmfabrik/fylr-seal-plugin):
 
 ```sh
-go run github.com/programmfabrik/fylr-encrypt-plugin@latest \
+go run github.com/programmfabrik/fylr-seal-plugin@latest \
     -in example-licensed.zip -out example-licensed_sealed.zip
 ```
 

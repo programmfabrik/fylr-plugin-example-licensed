@@ -1,4 +1,4 @@
-# Build the plugin and seal it with fylr-encrypt-plugin, producing the artifact
+# Build the plugin and seal it with fylr-seal-plugin, producing the artifact
 # the release workflow publishes to GitHub Pages.
 #
 #   make          -> build/example-licensed_sealed.zip
@@ -19,7 +19,7 @@ zip: ## build the plaintext plugin zip into build/
 	zip -r $(BUILD)/$(NAME).zip $(NAME)
 
 sealed: zip ## seal the plugin zip for the fylr Plugin Shop
-	go run github.com/programmfabrik/fylr-encrypt-plugin@latest \
+	go run github.com/programmfabrik/fylr-seal-plugin@latest \
 		-in $(BUILD)/$(NAME).zip -out $(BUILD)/$(NAME)_sealed.zip
 
 clean:

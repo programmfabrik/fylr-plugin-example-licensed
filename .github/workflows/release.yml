@@ -1,6 +1,6 @@
 name: Release
 
-# On a published release: build the plugin, seal it with fylr-encrypt-plugin
+# On a published release: build the plugin, seal it with fylr-seal-plugin
 # (public key only — no secrets), attach the sealed plugin to the release, and
 # publish it to GitHub Pages at an unguessable URL (a per-repo UUID in the
 # filename) — the same delivery mechanism the other fylr plugins use. A licensed
