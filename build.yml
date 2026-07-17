@@ -1,0 +1,7 @@
+# Build configuration for fylr-build-plugin — the explicit build description.
+# All features: https://github.com/programmfabrik/fylr-build-plugin
+
+webfrontend:
+  # served under base_url_prefix "web", delivered as-is
+  install:
+    - web

@@ -6,7 +6,7 @@ plugin:
     en-US: Example licensed plugin
     de-DE: Beispiel-Plugin (lizenziert)
   info:
-    en-US: A minimal fylr plugin, released sealed with fylr-encrypt-plugin. Its code opens only on a fylr that holds the matching key.
+    en-US: A minimal fylr plugin, released sealed with fylr-build-plugin. Its code opens only on a fylr that holds the matching key.
   custom:
     marker: example-licensed-v1
 

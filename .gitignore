@@ -1,3 +1,2 @@
-# build artifacts produced by `make` and the release workflow
-/build/
-/public/
+/build
+.DS_Store

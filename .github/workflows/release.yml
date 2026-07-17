@@ -1,11 +1,12 @@
 name: Release
 
-# On a published release: build the plugin, seal it with fylr-seal-plugin
-# (public key only — no secrets), attach the sealed plugin to the release, and
-# publish it to GitHub Pages at an unguessable URL (a per-repo UUID in the
-# filename) — the same delivery mechanism the other fylr plugins use. A licensed
-# plugin repo is normally private, so that Pages URL is the only handle to the
-# artifact; sealing means a leaked URL still yields nothing without fylr's key.
+# On a published release: build the plugin, seal it with fylr-build-plugin
+# seal (public key only — no secrets), attach the sealed plugin to the
+# release, and publish it to GitHub Pages at an unguessable URL (a per-repo
+# UUID in the filename) — the same delivery mechanism the other fylr plugins
+# use. A licensed plugin repo is normally private, so that Pages URL is the
+# only handle to the artifact; sealing means a leaked URL still yields nothing
+# without fylr's key.
 on:
   release:
     types:
@@ -28,9 +29,13 @@ jobs:
       - uses: actions/setup-go@v6
         with:
           go-version: "1.26"
+          # a plugin repo has no go.mod for the dependency cache to key on
+          cache: false
 
       - name: Build and seal the plugin
-        run: make sealed        # -> build/example-licensed_sealed.zip
+        run: make seal        # -> build/example-licensed_sealed.zip
+        env:
+          RELEASE_TAG: ${{ github.event.release.tag_name }}
 
       - name: Attach sealed plugin to the release
         uses: softprops/action-gh-release@v3

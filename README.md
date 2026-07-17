@@ -6,17 +6,19 @@ matching key. It exists to demonstrate — end to end, in a public repo, with no
 secrets — how a paid plugin is built, sealed and delivered through the fylr
 Plugin Shop.
 
-The plugin itself is deliberately trivial (`example-licensed/`: a manifest and a
-served web file). The interesting part is the release pipeline.
+The plugin itself is deliberately trivial (a manifest and a served web file).
+The interesting part is the release pipeline. The repo is structured and built
+like every fylr plugin — by
+[fylr-build-plugin](https://github.com/programmfabrik/fylr-build-plugin), see
+there for the whole picture.
 
 ## How it's sealed
 
-The [release workflow](.github/workflows/release.yml) builds `example-licensed.zip`
-and seals it with [`fylr-seal-plugin`](https://github.com/programmfabrik/fylr-seal-plugin):
+The [release workflow](.github/workflows/release.yml) builds and seals the
+plugin with `fylr-build-plugin seal` (`make seal`):
 
 ```sh
-go run github.com/programmfabrik/fylr-seal-plugin@latest \
-    -in example-licensed.zip -out example-licensed_sealed.zip
+go run github.com/programmfabrik/fylr-build-plugin@latest seal
 ```
 
 Sealing uses a **public** key only, so the workflow needs no secret. With the
@@ -34,11 +36,15 @@ public key (or a shop source's own key) — still no secret in the repo.
 make            # -> build/example-licensed_sealed.zip (a valid zip)
 ```
 
-The sealed plugin is an ordinary zip whose single entry is the encrypted plugin:
+The sealed plugin is an ordinary zip that keeps the plugin folder, with the
+manifest left plaintext and the whole plugin sealed to fylr's public key
+beside it:
 
 ```
 build/example-licensed_sealed.zip
-└── fylr-sealed-plugin.enc
+└── example-licensed/
+    ├── manifest.yml               # plaintext — readable identity, no key needed
+    └── fylr-sealed-plugin.enc     # the sealed plugin
 ```
 
 ## Publish to GitHub Pages
