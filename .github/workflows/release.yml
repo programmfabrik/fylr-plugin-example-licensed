@@ -6,7 +6,10 @@ name: Release
 # UUID in the filename) — the same delivery mechanism the other fylr plugins
 # use. A licensed plugin repo is normally private, so that Pages URL is the
 # only handle to the artifact; sealing means a leaked URL still yields nothing
-# without fylr's key.
+# without fylr's key. -latest.zip always serves the latest real release;
+# -prerelease.zip next to it serves the newest published release, prerelease
+# or not, for developers testing a prerelease (the "plugin prerelease url" of
+# the plugins sheet).
 on:
   release:
     types:
@@ -42,11 +45,31 @@ jobs:
         with:
           files: build/${{ env.SEALED }}
 
-      - name: Prepare GitHub Pages upload (unguessable filename)
+      # A Pages deploy replaces the whole site, so a prerelease puts the latest
+      # real release back as -latest.zip, downloaded unchanged from that
+      # release: a rebuild would change the sha256 the marketplace pins.
+      - name: Prepare GitHub Pages upload (unguessable filenames)
         run: |
           mkdir -p public
           cp build/${{ env.SEALED }} \
-             public/${{ github.event.repository.name }}-${{ env.ZIP_HASH }}-latest.zip
+             public/${{ github.event.repository.name }}-${{ env.ZIP_HASH }}-prerelease.zip
+          if [ "$PRERELEASE" != true ]; then
+            cp build/${{ env.SEALED }} \
+               public/${{ github.event.repository.name }}-${{ env.ZIP_HASH }}-latest.zip
+            exit 0
+          fi
+          latest=$(gh release list -R "$GITHUB_REPOSITORY" --exclude-drafts --exclude-pre-releases \
+            --limit 1 --json tagName --jq '.[0].tagName // ""')
+          if [ -z "$latest" ]; then
+            echo "::notice::no real release yet, Pages serves only the prerelease"
+            exit 0
+          fi
+          gh release download "$latest" -R "$GITHUB_REPOSITORY" \
+            --pattern ${{ env.SEALED }} \
+            --output public/${{ github.event.repository.name }}-${{ env.ZIP_HASH }}-latest.zip
+        env:
+          PRERELEASE: ${{ github.event.release.prerelease }}
+          GH_TOKEN: ${{ github.token }}
 
       - name: Upload GitHub Pages artifact
         uses: actions/upload-pages-artifact@v5
@@ -54,7 +77,6 @@ jobs:
           path: ./public
 
   deploy:
-    if: "!github.event.release.prerelease"
     needs: build
     runs-on: ubuntu-latest
     permissions:
@@ -68,3 +90,10 @@ jobs:
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v5
+
+      - name: Show the prerelease url
+        run: |
+          echo "prerelease url: ${PAGE_URL%/}/${{ github.event.repository.name }}-${{ env.ZIP_HASH }}-prerelease.zip" \
+            >> "$GITHUB_STEP_SUMMARY"
+        env:
+          PAGE_URL: ${{ steps.deployment.outputs.page_url }}
